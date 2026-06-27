@@ -300,14 +300,16 @@ const FLIGHT_CHECKLISTS = {
     ref: '01/01',
     hasObservations: true,
     idFields: [
-      { id: 'n_esc', label: 'N / ESC' },
-      { id: 'aramp1', label: 'A. RAMP' },
+      { id: 'num_vol', label: 'Numéro vol' },
+      { id: 'n_esc', label: 'Numéro escabeau' },
+      { id: 'aramp1', label: 'Agent ramp 1' },
       { id: 'date', label: 'Date', type: 'date' },
-      { id: 'n_bc4', label: 'N / BC4' },
-      { id: 'aramp2', label: 'A. RAMP' },
-      { id: 'type_avion', label: "Type d'avion" },
-      { id: 'n_gpu', label: 'N / GPU' },
-      { id: 'cariste', label: 'Cariste' },
+      { id: 'n_bc4', label: 'Numéro tapis à bagages' },
+      { id: 'aramp2', label: 'Agent ramp 2' },
+      { id: 'type_avion', label: "Type d'avion", type: 'select', options: ['Boeing', 'Airbus'] },
+      { id: 'n_gpu', label: 'Numéro GPU' },
+      { id: 'cariste', label: 'Cariste 1' },
+      { id: 'cariste2', label: 'Cariste 2' },
       { id: 'imm', label: 'Immatriculation' },
     ],
     points: [
@@ -1079,9 +1081,12 @@ function clRecordById(id) { return clRecords.find(r => r.id === id) || null; }
 function renderChecklist(company) {
   clCompany = company;
   clCfg = FLIGHT_CHECKLISTS[company.code];
-  const idHTML = clCfg.idFields.map(f =>
-    ekRow(`<div class="field-label">${esc(f.label)}</div><input id="cl_${f.id}" class="field-input" ${f.type === 'date' ? 'type="date"' : 'autocomplete="off"'}>`)
-  ).join('');
+  const idHTML = clCfg.idFields.map(f => {
+    const input = f.type === 'select'
+      ? `<select id="cl_${f.id}" class="field-select"><option value="">— Sélectionner —</option>${(f.options || []).map(o => `<option>${esc(o)}</option>`).join('')}</select>`
+      : `<input id="cl_${f.id}" class="field-input" ${f.type === 'date' ? 'type="date"' : 'autocomplete="off"'}>`;
+    return ekRow(`<div class="field-label">${esc(f.label)}</div>${input}`);
+  }).join('');
   const ptsHTML = clCfg.points.map((p, i) => `
     <div class="cl-point">
       <div class="cl-point-label">${i + 1}. ${esc(p)}</div>
