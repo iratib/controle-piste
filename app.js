@@ -27,6 +27,7 @@ const CONTROL_PLANS = [
     subtitle: 'Contrôle circulation tarmac',
     reportTitle: 'CONTRÔLE CIRCULATION — RAM HANDLING',
     reportSubtitle: 'Rapport de contrôle qualité tarmac',
+    multiCategory: true, // Type d'infraction : choix multiple (clic = sélectionne, re-clic = annule)
     sections: [
       { icon: '👤', title: 'Agent contrevenant', fields: [
         { id: 'nom', label: 'Nom', type: 'text', required: true, uppercase: true, role: 'primary', placeholder: "Nom de l'agent" },
@@ -122,6 +123,7 @@ const CONTROL_PLANS = [
     subtitle: 'Équipements de protection individuelle',
     reportTitle: 'CONTRÔLE EPI — RAM HANDLING',
     reportSubtitle: 'Rapport de contrôle du port des EPI',
+    multiCategory: true, // points non conformes : choix multiple (clic = sélectionne, re-clic = annule)
     sections: [
       { icon: '👤', title: 'Agent contrôlé', fields: [
         { id: 'nom', label: 'Nom', type: 'text', required: true, uppercase: true, role: 'primary', placeholder: "Nom de l'agent" },
@@ -158,6 +160,7 @@ const CONTROL_PLANS = [
     subtitle: 'Inspection des zones / parkings',
     reportTitle: 'CONTRÔLE ZONES — RAM HANDLING',
     reportSubtitle: "Rapport d'inspection des zones",
+    multiCategory: true, // points non conformes : choix multiple (clic = sélectionne, re-clic = annule)
     sections: [
       { icon: '📍', title: 'Zone contrôlée', fields: [
         { id: 'zone', label: 'Zone contrôlée', type: 'select', required: true, role: 'primary', placeholder: '— Sélectionner la zone —', options: ['T1', 'T2', 'CORRESPONDANCE', 'LIVRAISON'] },
@@ -193,6 +196,7 @@ const CONTROL_PLANS = [
     subtitle: 'Calage & balisage avion',
     reportTitle: 'CONTRÔLE CALES / CÔNES — RAM HANDLING',
     reportSubtitle: 'Rapport de contrôle calage et balisage',
+    multiCategory: true, // points non conformes : choix multiple (clic = sélectionne, re-clic = annule)
     sections: [
       { icon: '✈️', title: 'Avion / Parking', fields: [
         { id: 'vol', label: 'N° Vol / Avion', type: 'text', required: true, uppercase: true, role: 'primary', placeholder: 'Ex: AT201 / CN-RGY' },
