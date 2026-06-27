@@ -880,7 +880,7 @@ function readEKFlight() {
 const EK_PDF_CSS = `
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     @page { size: A4; margin: 12mm; }
-    .ekdoc { font-family: Arial, sans-serif; background: #f5f5f5; color: #000; margin: 0; padding: 16px; box-sizing: border-box; }
+    .ekdoc { font-family: Arial, sans-serif; background: #f5f5f5; color: #000; margin: 0; padding: 24px; box-sizing: border-box; width: 794px; max-width: 794px; }
     .ekdoc .header { background: #1a237e; color: #fff; padding: 16px 18px; border-radius: 8px; display: flex; align-items: center; gap: 12px; margin-bottom: 18px; box-sizing: border-box; }
     .ekdoc .header .logo-slot { flex: 0 0 118px; display: flex; align-items: center; }
     .ekdoc .header .logo-slot.right { justify-content: flex-end; }
@@ -889,6 +889,7 @@ const EK_PDF_CSS = `
     .ekdoc .card { background: #fff; padding: 18px 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 18px; page-break-inside: avoid; }
     .ekdoc .card h2 { color: #1a237e; margin: 0 0 14px; border-bottom: 2px solid #1a237e; padding-bottom: 8px; font-size: 17px; }
     .ekdoc table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .ekdoc table td, .ekdoc table th { word-wrap: break-word; overflow-wrap: anywhere; }
     .ekdoc td { font-size: 13px; }
     .ekdoc .lbl { padding: 8px; border-bottom: 1px solid #eee; }
     .ekdoc .grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -1029,10 +1030,10 @@ function ekPdfWorker(f) {
   el.style.background = '#f5f5f5';
   el.innerHTML = `<style>${EK_PDF_CSS}</style>${buildEKReportBody(f)}`;
   const opt = {
-    margin: [8, 6, 8, 6],
+    margin: 0, // marges gérées par le padding interne du document → évite le rognage à droite
     filename: ekPdfFilename(f),
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#f5f5f5' },
+    html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#f5f5f5', width: 794, windowWidth: 794 },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
   };
@@ -1196,7 +1197,7 @@ function renderClList() {
 const CL_PDF_CSS = `
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     @page { size: A4; margin: 12mm; }
-    .cldoc { font-family: Arial, sans-serif; background: #f5f5f5; color: #000; margin: 0; padding: 16px; box-sizing: border-box; }
+    .cldoc { font-family: Arial, sans-serif; background: #f5f5f5; color: #000; margin: 0; padding: 24px; box-sizing: border-box; width: 794px; max-width: 794px; }
     .cldoc .header { background: #1a237e; color: #fff; padding: 16px 18px; border-radius: 8px; display: flex; align-items: center; gap: 12px; margin-bottom: 18px; box-sizing: border-box; }
     .cldoc .header .logo-slot { flex: 0 0 118px; display: flex; align-items: center; }
     .cldoc .header .logo-slot.right { justify-content: flex-end; }
@@ -1204,6 +1205,7 @@ const CL_PDF_CSS = `
     .cldoc .header h1 { margin: 0; font-size: 22px; flex: 1; min-width: 0; text-align: center; }
     .cldoc .card { background: #fff; padding: 18px 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 18px; page-break-inside: avoid; }
     .cldoc .card h2 { color: #1a237e; margin: 0 0 14px; border-bottom: 2px solid #1a237e; padding-bottom: 8px; font-size: 17px; }
+    .cldoc table td, .cldoc table th { word-wrap: break-word; overflow-wrap: anywhere; }
     .cldoc .info { width: 100%; border-collapse: collapse; table-layout: fixed; }
     .cldoc .info td { padding: 8px; border-bottom: 1px solid #eee; font-size: 13px; }
     .cldoc .pts { width: 100%; border-collapse: collapse; }
@@ -1287,10 +1289,10 @@ function clPdfWorker(rec) {
   el.style.background = '#fff';
   el.innerHTML = `<style>${CL_PDF_CSS}</style>${buildChecklistBody(rec)}`;
   const opt = {
-    margin: [8, 6, 8, 6],
+    margin: 0, // marges gérées par le padding interne du document → évite le rognage à droite
     filename: clPdfFilename(rec),
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#fff' },
+    html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#fff', width: 794, windowWidth: 794 },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
   };
