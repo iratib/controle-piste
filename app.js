@@ -299,6 +299,13 @@ const FLIGHT_CHECKLISTS = {
     prest: 'SSQ',
     ref: '01/01',
     hasObservations: true,
+    // Emplacements photos (ajoutées en dernière section du PDF). max = nb max de photos.
+    photoSlots: [
+      { id: 'gpu', label: 'GPU', max: 1 },
+      { id: 'cable_gpu', label: "Connexion du câble GPU à l'avion", max: 1 },
+      { id: 'cone_plateforme', label: "Cône sur la plate-forme d'escabeau", max: 2 },
+      { id: 'cones_securite', label: 'Cônes de sécurité (débarquement / embarquement passagers)', max: 1 },
+    ],
     idFields: [
       { id: 'num_vol', label: 'Numéro vol' },
       { id: 'n_esc', label: 'Numéro escabeau', type: 'number' },
@@ -345,6 +352,7 @@ let ekFlights = [];       // vols EK enregistrés (persistés)
 let clCfg = null;         // config de checklist standard en cours
 let clCompany = null;     // compagnie de la checklist en cours
 let clRecords = [];       // contrôles enregistrés (par compagnie, persistés)
+let clPhotos = {};        // photos de la checklist en cours : { [slotId]: [{ url }] }
 let session = { agent: '', date: '', vacation: '', startTime: '' };
 let records = [];
 let selectedCategoryId = '';
@@ -1081,6 +1089,7 @@ function clRecordById(id) { return clRecords.find(r => r.id === id) || null; }
 function renderChecklist(company) {
   clCompany = company;
   clCfg = FLIGHT_CHECKLISTS[company.code];
+  clPhotos = {}; // réinitialise les photos pour un nouveau contrôle
   const idHTML = clCfg.idFields.map(f => {
     const attr = f.type === 'date' ? 'type="date"'
       : f.type === 'number' ? 'type="text" inputmode="numeric" autocomplete="off"'
@@ -1124,6 +1133,7 @@ function renderChecklist(company) {
       <div class="form-section-header"><span class="form-section-icon">🗒️</span><span class="form-section-title">Observations</span></div>
       ${ekRow(`<textarea id="cl_observations" class="field-input" style="resize:vertical;min-height:90px" placeholder="Observations générales…"></textarea>`)}
     </div>` : ''}
+    ${clPhotosSectionHTML()}
     <button class="btn-submit" onclick="saveChecklistRecord()">➕ Enregistrer le contrôle</button>
     <button class="btn-export" style="margin:0 12px 12px;width:calc(100% - 24px)" onclick="previewClPdf()">🖨️ Aperçu PDF (sans enregistrer)</button>
     <div class="form-section" style="margin-top:6px">
@@ -1135,6 +1145,53 @@ function renderChecklist(company) {
   renderClList();
 }
 
+/* ── Photos de la checklist (emplacements définis par photoSlots) ── */
+function clPhotosSectionHTML() {
+  const slots = (clCfg.photoSlots || []);
+  if (!slots.length) return '';
+  const rows = slots.map(s => {
+    const n = s.max > 1 ? ` (jusqu'à ${s.max}${s.max === 2 ? ', 1 possible' : ''})` : '';
+    return `<div class="cl-photo-slot">
+      <div class="field-label">${esc(s.label)}${n}</div>
+      <input type="file" id="clph_${s.id}" accept="image/*" capture="environment" style="display:none" onchange="onClPhoto(this,'${s.id}',${s.max})">
+      <button type="button" class="photo-btn" onclick="document.getElementById('clph_${s.id}').click()">📷 Ajouter une photo</button>
+      <div class="photo-preview" id="clphPrev_${s.id}"></div>
+    </div>`;
+  }).join('');
+  return `<div class="form-section">
+    <div class="form-section-header"><span class="form-section-icon">📷</span><span class="form-section-title">Photos</span></div>
+    ${rows}
+  </div>`;
+}
+function onClPhoto(input, slotId, max) {
+  const files = Array.from(input.files || []);
+  input.value = '';
+  if (!files.length) return;
+  clPhotos[slotId] = clPhotos[slotId] || [];
+  let pending = files.length;
+  files.forEach(f => fileToResizedDataURL(f, url => {
+    if (url && clPhotos[slotId].length < max) clPhotos[slotId].push({ url });
+    if (--pending <= 0) renderClPhotos(slotId, max);
+  }));
+}
+function removeClPhoto(slotId, i, max) {
+  if (clPhotos[slotId]) clPhotos[slotId].splice(i, 1);
+  renderClPhotos(slotId, max);
+}
+function renderClPhotos(slotId, max) {
+  const box = document.getElementById('clphPrev_' + slotId);
+  if (!box) return;
+  const list = clPhotos[slotId] || [];
+  box.innerHTML = list.map((p, i) =>
+    `<div class="photo-thumb" style="margin:6px 6px 0 0;display:inline-block">
+      <img src="${p.url}" alt="photo">
+      <button type="button" class="photo-remove" onclick="removeClPhoto('${slotId}',${i},${max})">✕</button>
+    </div>`).join('');
+  // Masque le bouton quand le maximum est atteint
+  const btn = box.parentElement.querySelector('.photo-btn');
+  if (btn) btn.style.display = list.length >= max ? 'none' : '';
+}
+
 function readChecklist() {
   const values = {};
   clCfg.idFields.forEach(f => { const e = document.getElementById('cl_' + f.id); values[f.id] = e ? e.value.trim() : ''; });
@@ -1144,7 +1201,10 @@ function readChecklist() {
     return { text: p, status: s ? s.value : '', remark: r ? r.value.trim() : '' };
   });
   const obs = document.getElementById('cl_observations');
-  return { values, points, observations: obs ? obs.value.trim() : '' };
+  // Snapshot des photos par emplacement
+  const photos = {};
+  Object.keys(clPhotos).forEach(k => { if (clPhotos[k] && clPhotos[k].length) photos[k] = clPhotos[k].map(p => ({ url: p.url })); });
+  return { values, points, observations: obs ? obs.value.trim() : '', photos };
 }
 
 function saveChecklistRecord() {
@@ -1222,6 +1282,10 @@ const CL_PDF_CSS = `
     .cldoc .pts .st { text-align: center; font-weight: bold; width: 86px; }
     .cldoc .pts .rm { width: 34%; color: #1a237e; }
     .cldoc .obsbox { padding: 10px; background: #f8f9fa; border-radius: 4px; font-size: 13px; line-height: 1.5; white-space: pre-wrap; }
+    .cldoc .clphoto-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 8px; }
+    .cldoc .clphoto { text-align: center; page-break-inside: avoid; }
+    .cldoc .clphoto img { width: 100%; max-height: 320px; object-fit: contain; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .cldoc .clphoto-cap { margin-top: 6px; font-size: 11px; color: #555; }
 `;
 function buildChecklistBody(rec) {
   const cfg = FLIGHT_CHECKLISTS[rec.companyCode] || clCfg;
@@ -1247,6 +1311,17 @@ function buildChecklistBody(rec) {
   }).join('');
   const obsBlock = rec.observations ? `<div class="card"><h2>Observations</h2><div class="obsbox">${esc(rec.observations)}</div></div>` : '';
 
+  // Section Photos (en dernier) : emplacements définis par photoSlots
+  const photos = rec.photos || {};
+  const photoItems = (cfg.photoSlots || []).flatMap(s =>
+    (photos[s.id] || []).map((p, i) => {
+      const cnt = (photos[s.id] || []).length;
+      const cap = esc(s.label) + (cnt > 1 ? ` (${i + 1}/${cnt})` : '');
+      return `<div class="clphoto"><img src="${p.url}" alt="${cap}"><div class="clphoto-cap">${cap}</div></div>`;
+    })
+  ).join('');
+  const photoBlock = photoItems ? `<div class="card"><h2>Photos</h2><div class="clphoto-grid">${photoItems}</div></div>` : '';
+
   return `<div class="cldoc">
     <div class="header">
       <div class="logo-slot"><img src="${ramLogo}" alt="RAM Handling"></div>
@@ -1265,6 +1340,7 @@ function buildChecklistBody(rec) {
       </table>
     </div>
     ${obsBlock}
+    ${photoBlock}
   </div>`;
 }
 function buildChecklistHTML(rec) {
