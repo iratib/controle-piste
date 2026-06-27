@@ -301,16 +301,16 @@ const FLIGHT_CHECKLISTS = {
     hasObservations: true,
     idFields: [
       { id: 'num_vol', label: 'Numéro vol' },
-      { id: 'n_esc', label: 'Numéro escabeau' },
-      { id: 'aramp1', label: 'Agent ramp 1' },
-      { id: 'date', label: 'Date', type: 'date' },
-      { id: 'n_bc4', label: 'Numéro tapis à bagages' },
-      { id: 'aramp2', label: 'Agent ramp 2' },
+      { id: 'n_esc', label: 'Numéro escabeau', type: 'number' },
+      { id: 'n_bc4', label: 'Numéro tapis à bagages', type: 'number' },
+      { id: 'n_gpu', label: 'Numéro GPU', type: 'number' },
       { id: 'type_avion', label: "Type d'avion", type: 'select', options: ['Boeing', 'Airbus'] },
-      { id: 'n_gpu', label: 'Numéro GPU' },
+      { id: 'imm', label: 'Immatriculation' },
+      { id: 'aramp1', label: 'Agent ramp 1' },
+      { id: 'aramp2', label: 'Agent ramp 2' },
       { id: 'cariste', label: 'Cariste 1' },
       { id: 'cariste2', label: 'Cariste 2' },
-      { id: 'imm', label: 'Immatriculation' },
+      { id: 'date', label: 'Date', type: 'date' },
     ],
     points: [
       "Vérification matériel GSE",
@@ -1082,9 +1082,12 @@ function renderChecklist(company) {
   clCompany = company;
   clCfg = FLIGHT_CHECKLISTS[company.code];
   const idHTML = clCfg.idFields.map(f => {
+    const attr = f.type === 'date' ? 'type="date"'
+      : f.type === 'number' ? 'type="text" inputmode="numeric" autocomplete="off"'
+      : 'autocomplete="off"';
     const input = f.type === 'select'
       ? `<select id="cl_${f.id}" class="field-select"><option value="">— Sélectionner —</option>${(f.options || []).map(o => `<option>${esc(o)}</option>`).join('')}</select>`
-      : `<input id="cl_${f.id}" class="field-input" ${f.type === 'date' ? 'type="date"' : 'autocomplete="off"'}>`;
+      : `<input id="cl_${f.id}" class="field-input" ${attr}>`;
     return ekRow(`<div class="field-label">${esc(f.label)}</div>${input}`);
   }).join('');
   const ptsHTML = clCfg.points.map((p, i) => `
